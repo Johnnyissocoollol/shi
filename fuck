@@ -1,0 +1,71 @@
+-- Put this in a LocalScript inside StarterGui or a ScreenGui
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "TradeScamGUI"
+gui.ResetOnSpawn = false
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 180, 0, 130)
+frame.Position = UDim2.new(0, 10, 0, 50)  -- Top-left corner, away from trade window
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 22)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+title.Text = "Trade Scam"
+title.TextColor3 = Color3.fromRGB(220, 220, 220)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 13
+title.Parent = frame
+
+-- Freeze Trade Button
+local freezeBtn = Instance.new("TextButton")
+freezeBtn.Size = UDim2.new(0.7, 0, 0, 28)
+freezeBtn.Position = UDim2.new(0.15, 0, 0, 28)
+freezeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 85)
+freezeBtn.Text = "Freeze Trade"
+freezeBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+freezeBtn.Font = Enum.Font.SourceSansBold
+freezeBtn.TextSize = 11
+freezeBtn.BorderSizePixel = 0
+freezeBtn.Parent = frame
+
+-- Success message
+local successText = Instance.new("TextLabel")
+successText.Size = UDim2.new(0.9, 0, 0, 16)
+successText.Position = UDim2.new(0.05, 0, 0, 60)
+successText.BackgroundTransparency = 1
+successText.Text = "Freeze trade success you can remove ur items"
+successText.TextColor3 = Color3.fromRGB(100, 255, 100)
+successText.TextSize = 8
+successText.Font = Enum.Font.SourceSans
+successText.Visible = false
+successText.Parent = frame
+
+-- Force Accept Button
+local acceptBtn = Instance.new("TextButton")
+acceptBtn.Size = UDim2.new(0.7, 0, 0, 28)
+acceptBtn.Position = UDim2.new(0.15, 0, 0, 88)
+acceptBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 85)
+acceptBtn.Text = "Force Accept"
+acceptBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+acceptBtn.Font = Enum.Font.SourceSansBold
+acceptBtn.TextSize = 11
+acceptBtn.BorderSizePixel = 0
+acceptBtn.Parent = frame
+
+-- Freeze button: show success, hide after 5 seconds
+freezeBtn.MouseButton1Click:Connect(function()
+    successText.Visible = true
+    task.wait(5)
+    successText.Visible = false
+end)
+
+-- Force accept button does nothing
