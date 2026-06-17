@@ -1,0 +1,227 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local localplayer = Players.LocalPlayer
+
+local enabled = false
+local speed = 65
+local conn = nil
+local sliding = false
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "SpeedGUI"
+gui.ResetOnSpawn = false
+gui.Parent = game.CoreGui
+gui.IgnoreGuiInset = true
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 160, 0, 120)
+frame.Position = UDim2.new(0.5, -80, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Parent = gui
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+local stroke = Instance.new("UIStroke", frame)
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(60, 60, 70)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 22)
+title.BackgroundTransparency = 1
+title.Text = "Speed Glitch"
+title.TextColor3 = Color3.fromRGB(220, 220, 220)
+title.TextScaled = true
+title.Font = Enum.Font.GothamSemibold
+title.Active = true
+title.Parent = frame
+
+local switchFrame = Instance.new("Frame")
+switchFrame.Size = UDim2.new(0, 40, 0, 22)
+switchFrame.Position = UDim2.new(0.5, -20, 0, 32)
+switchFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+switchFrame.BorderSizePixel = 0
+switchFrame.Parent = frame
+Instance.new("UICorner", switchFrame).CornerRadius = UDim.new(1, 0)
+
+local switchCircle = Instance.new("Frame")
+switchCircle.Size = UDim2.new(0, 18, 0, 18)
+switchCircle.Position = UDim2.new(0, 2, 0.5, -9)
+switchCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+switchCircle.BorderSizePixel = 0
+switchCircle.Parent = switchFrame
+Instance.new("UICorner", switchCircle).CornerRadius = UDim.new(1, 0)
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, 0, 0, 20)
+speedLabel.Position = UDim2.new(0, 0, 0, 58)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "65"
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.TextScaled = true
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.Parent = frame
+
+local sliderTouchArea = Instance.new("Frame")
+sliderTouchArea.Size = UDim2.new(0, 140, 0, 34)
+sliderTouchArea.Position = UDim2.new(0.5, -70, 0, 78)
+sliderTouchArea.BackgroundTransparency = 1
+sliderTouchArea.Parent = frame
+
+local sliderTrack = Instance.new("Frame")
+sliderTrack.Size = UDim2.new(0, 120, 0, 3)
+sliderTrack.Position = UDim2.new(0.5, -60, 0.5, -1.5)
+sliderTrack.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+sliderTrack.BorderSizePixel = 0
+sliderTrack.Parent = sliderTouchArea
+Instance.new("UICorner", sliderTrack).CornerRadius = UDim.new(1, 0)
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(0, 0, 1, 0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(150, 150, 160)
+sliderFill.BorderSizePixel = 0
+sliderFill.Parent = sliderTrack
+Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
+
+local sliderBtn = Instance.new("Frame")
+sliderBtn.Size = UDim2.new(0, 24, 0, 24)
+sliderBtn.Position = UDim2.new(0, -12, 0.5, -12)
+sliderBtn.BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+sliderBtn.BorderSizePixel = 0
+sliderBtn.Parent = sliderTrack
+Instance.new("UICorner", sliderBtn).CornerRadius = UDim.new(1, 0)
+
+local dragStart, startPos
+local isDraggingTitle = false
+
+title.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		isDraggingTitle = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if isDraggingTitle and input.UserInputType == Enum.UserInputType.Touch then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+	
+	if sliding and input.UserInputType == Enum.UserInputType.Touch then
+		handleSlider(input)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		isDraggingTitle = false
+		sliding = false
+	end
+end)
+
+local function updateToggle()
+	if enabled then
+		switchFrame.BackgroundColor3 = Color3.fromRGB(100, 100, 110)
+		switchCircle.Position = UDim2.new(0, 20, 0.5, -9)
+	else
+		switchFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+		switchCircle.Position = UDim2.new(0, 2, 0.5, -9)
+	end
+end
+
+local function toggle()
+	enabled = not enabled
+
+	if enabled then
+		conn = RunService.Heartbeat:Connect(function()
+			local char = localplayer.Character
+			if not char then return end
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if not hum then return end
+
+			local state = hum:GetState()
+			local air = state == Enum.HumanoidStateType.Jumping
+				or state == Enum.HumanoidStateType.Freefall
+				or state == Enum.HumanoidStateType.FallingDown
+
+			if air and hum.MoveDirection.Magnitude > 0 then
+				hum.WalkSpeed = speed
+			else
+				hum.WalkSpeed = 16
+			end
+		end)
+	else
+		if conn then conn:Disconnect() conn = nil end
+		local char = localplayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then hum.WalkSpeed = 16 end
+		end
+	end
+
+	updateToggle()
+end
+
+switchFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		toggle()
+	end
+end)
+
+local function updateSlider(value)
+	local percent = value / 200
+	sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+	sliderBtn.Position = UDim2.new(percent, -12, 0.5, -12)
+	speedLabel.Text = tostring(value)
+	speed = value
+end
+
+local function handleSlider(input)
+	task.wait()
+
+	local trackPos = sliderTrack.AbsolutePosition.X
+	local trackSize = sliderTrack.AbsoluteSize.X
+
+	if trackSize == 0 then return end
+
+	local pos = input.Position.X - trackPos
+	local percent = math.clamp(pos / trackSize, 0, 1)
+	local value = math.floor(percent * 200 + 0.5)
+	value = math.max(20, math.min(200, value))
+	updateSlider(value)
+end
+
+sliderTouchArea.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		sliding = true
+		handleSlider(input)
+	end
+end)
+
+sliderBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		sliding = true
+		handleSlider(input)
+	end
+end)
+
+localplayer.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	local char = localplayer.Character
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then hum.WalkSpeed = 16 end
+	end
+end)
+
+updateSlider(65)
+updateToggle()
