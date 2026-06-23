@@ -1,0 +1,487 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local localplayer = Players.LocalPlayer
+
+local loopFlingAllEnabled = false
+local loopFlingAllThread = nil
+local guiVisible = true
+local dragData = nil
+
+local FlingGUI = Instance.new("ScreenGui")
+FlingGUI.Name = "FlingGUI"
+FlingGUI.ResetOnSpawn = false
+FlingGUI.Parent = game.CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 200, 0, 120)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -60)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = FlingGUI
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+local Shadow = Instance.new("Frame")
+Shadow.Size = UDim2.new(1, 4, 1, 4)
+Shadow.Position = UDim2.new(0, -2, 0, -2)
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.8
+Shadow.BorderSizePixel = 0
+Shadow.Parent = MainFrame
+
+local ShadowCorner = Instance.new("UICorner")
+ShadowCorner.CornerRadius = UDim.new(0, 14)
+ShadowCorner.Parent = Shadow
+
+local DragHandle = Instance.new("Frame")
+DragHandle.Name = "DragHandle"
+DragHandle.Size = UDim2.new(1, 0, 0, 30)
+DragHandle.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+DragHandle.BackgroundTransparency = 0.3
+DragHandle.BorderSizePixel = 0
+DragHandle.Parent = MainFrame
+
+local DragCorner = Instance.new("UICorner")
+DragCorner.CornerRadius = UDim.new(0, 12)
+DragCorner.Parent = DragHandle
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "FLING ALL"
+Title.TextColor3 = Color3.fromRGB(200, 200, 200)
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.Parent = DragHandle
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+CloseBtn.Position = UDim2.new(1, -30, 0, 2.5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+CloseBtn.BackgroundTransparency = 0.3
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+CloseBtn.TextSize = 14
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = DragHandle
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -20, 1, -40)
+Content.Position = UDim2.new(0, 10, 0, 35)
+Content.BackgroundTransparency = 1
+Content.Parent = MainFrame
+
+local ToggleContainer = Instance.new("Frame")
+ToggleContainer.Name = "ToggleContainer"
+ToggleContainer.Size = UDim2.new(1, 0, 0, 45)
+ToggleContainer.Position = UDim2.new(0, 0, 0, 0)
+ToggleContainer.BackgroundTransparency = 1
+ToggleContainer.Parent = Content
+
+local ToggleLabel = Instance.new("TextLabel")
+ToggleLabel.Name = "ToggleLabel"
+ToggleLabel.Size = UDim2.new(0.5, -10, 1, 0)
+ToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+ToggleLabel.BackgroundTransparency = 1
+ToggleLabel.Text = "Loop Fling All"
+ToggleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+ToggleLabel.TextSize = 13
+ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+ToggleLabel.Font = Enum.Font.Gotham
+ToggleLabel.Parent = ToggleContainer
+
+local ToggleBg = Instance.new("Frame")
+ToggleBg.Name = "ToggleBg"
+ToggleBg.Size = UDim2.new(0, 50, 0, 28)
+ToggleBg.Position = UDim2.new(1, -50, 0.5, -14)
+ToggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+ToggleBg.BorderSizePixel = 0
+ToggleBg.Parent = ToggleContainer
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleBg
+
+local ToggleCircle = Instance.new("Frame")
+ToggleCircle.Name = "ToggleCircle"
+ToggleCircle.Size = UDim2.new(0, 22, 0, 22)
+ToggleCircle.Position = UDim2.new(0, 3, 0.5, -11)
+ToggleCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+ToggleCircle.BorderSizePixel = 0
+ToggleCircle.Parent = ToggleBg
+
+local CircleCorner = Instance.new("UICorner")
+CircleCorner.CornerRadius = UDim.new(1, 0)
+CircleCorner.Parent = ToggleCircle
+
+local Glow = Instance.new("Frame")
+Glow.Name = "Glow"
+Glow.Size = UDim2.new(1, 8, 1, 8)
+Glow.Position = UDim2.new(0, -4, 0, -4)
+Glow.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Glow.BackgroundTransparency = 1
+Glow.BorderSizePixel = 0
+Glow.Parent = ToggleBg
+
+local GlowCorner = Instance.new("UICorner")
+GlowCorner.CornerRadius = UDim.new(1, 0)
+GlowCorner.Parent = Glow
+
+local StatusDot = Instance.new("Frame")
+StatusDot.Name = "StatusDot"
+StatusDot.Size = UDim2.new(0, 6, 0, 6)
+StatusDot.Position = UDim2.new(0.7, 0, 0.5, -3)
+StatusDot.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+StatusDot.BorderSizePixel = 0
+StatusDot.Parent = ToggleContainer
+
+local DotCorner = Instance.new("UICorner")
+DotCorner.CornerRadius = UDim.new(1, 0)
+DotCorner.Parent = StatusDot
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Name = "StatusText"
+StatusText.Size = UDim2.new(0.25, 0, 1, 0)
+StatusText.Position = UDim2.new(0.72, 0, 0, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.Text = "OFF"
+StatusText.TextColor3 = Color3.fromRGB(180, 50, 50)
+StatusText.TextSize = 11
+StatusText.TextXAlignment = Enum.TextXAlignment.Left
+StatusText.Font = Enum.Font.GothamBold
+StatusText.Parent = ToggleContainer
+
+local FlingCount = Instance.new("TextLabel")
+FlingCount.Name = "FlingCount"
+FlingCount.Size = UDim2.new(1, 0, 0, 20)
+FlingCount.Position = UDim2.new(0, 0, 1, -20)
+FlingCount.BackgroundTransparency = 1
+FlingCount.Text = "Players: 0"
+FlingCount.TextColor3 = Color3.fromRGB(150, 150, 155)
+FlingCount.TextSize = 11
+FlingCount.TextXAlignment = Enum.TextXAlignment.Left
+FlingCount.Font = Enum.Font.Gotham
+FlingCount.Parent = Content
+
+local function updatePlayerCount()
+    local count = 0
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= localplayer and p.Character then
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                count = count + 1
+            end
+        end
+    end
+    FlingCount.Text = "Players: " .. count
+end
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+        updatePlayerCount()
+    end
+end)
+
+local function SkidFling(TargetPlayer)
+    local Player = localplayer
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+    local TCharacter = TargetPlayer.Character
+    
+    if not TCharacter then 
+        return 
+    end
+
+    local THumanoid  
+    local TRootPart  
+    local THead  
+    local Accessory  
+    local Handle  
+    
+    if TCharacter:FindFirstChildOfClass("Humanoid") then  
+        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")  
+    end  
+    if THumanoid and THumanoid.RootPart then  
+        TRootPart = THumanoid.RootPart  
+    end  
+    if TCharacter:FindFirstChild("Head") then  
+        THead = TCharacter.Head  
+    end  
+    if TCharacter:FindFirstChildOfClass("Accessory") then  
+        Accessory = TCharacter:FindFirstChildOfClass("Accessory")  
+    end  
+    if Accessory and Accessory:FindFirstChild("Handle") then  
+        Handle = Accessory.Handle  
+    end  
+    
+    if Character and Humanoid and RootPart then  
+        if RootPart.Velocity.Magnitude < 50 then  
+            getgenv().OldPos = RootPart.CFrame  
+        end  
+        
+        if THumanoid and THumanoid.Sit then  
+            return 
+        end  
+        
+        if THead then  
+            workspace.CurrentCamera.CameraSubject = THead  
+        elseif Handle then  
+            workspace.CurrentCamera.CameraSubject = Handle  
+        elseif THumanoid and TRootPart then  
+            workspace.CurrentCamera.CameraSubject = THumanoid  
+        end  
+        
+        if not TCharacter:FindFirstChildWhichIsA("BasePart") then  
+            return  
+        end  
+        
+        local FPos = function(BasePart, Pos, Ang)  
+            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang  
+            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)  
+            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)  
+            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)  
+        end  
+        
+        local SFBasePart = function(BasePart)  
+            local TimeToWait = 2  
+            local Time = tick()  
+            local Angle = 0  
+            repeat  
+                if RootPart and THumanoid then  
+                    if BasePart.Velocity.Magnitude < 50 then  
+                        Angle = Angle + 100  
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle),0 ,0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))  
+                        task.wait()  
+                    else  
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))  
+                        task.wait()  
+                          
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))  
+                        task.wait()  
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))  
+                        task.wait()  
+                    end  
+                end  
+            until Time + TimeToWait < tick()  
+        end  
+        
+        workspace.FallenPartsDestroyHeight = 0/0  
+        
+        local BV = Instance.new("BodyVelocity")  
+        BV.Parent = RootPart  
+        BV.Velocity = Vector3.new(0, 0, 0)  
+        BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)  
+        
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)  
+        
+        if TRootPart then  
+            SFBasePart(TRootPart)  
+        elseif THead then  
+            SFBasePart(THead)  
+        elseif Handle then  
+            SFBasePart(Handle)  
+        else  
+            return  
+        end  
+        
+        BV:Destroy()  
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)  
+        workspace.CurrentCamera.CameraSubject = Humanoid  
+        
+        if getgenv().OldPos then  
+            repeat  
+                RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)  
+                Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))  
+                Humanoid:ChangeState("GettingUp")  
+                for _, part in pairs(Character:GetChildren()) do  
+                    if part:IsA("BasePart") then  
+                        part.Velocity, part.RotVelocity = Vector3.new(), Vector3.new()  
+                    end  
+                end  
+                task.wait()  
+            until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25  
+        end  
+    end
+end
+
+local function flingAllPlayers()
+    local players = Players:GetPlayers()
+    for _, player in ipairs(players) do
+        if player ~= localplayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                task.spawn(function()
+                    pcall(function()
+                        SkidFling(player)
+                    end)
+                end)
+                task.wait(0.05)
+            end
+        end
+    end
+end
+
+local function startLoopFlingAll()
+    if loopFlingAllThread then 
+        task.cancel(loopFlingAllThread) 
+        loopFlingAllThread = nil
+    end
+    
+    loopFlingAllEnabled = true
+    
+    ToggleBg.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    ToggleCircle.Position = UDim2.new(1, -25, 0.5, -11)
+    ToggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Glow.BackgroundTransparency = 0.7
+    StatusDot.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+    StatusText.Text = "ON"
+    StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+    
+    loopFlingAllThread = task.spawn(function()
+        while loopFlingAllEnabled do
+            flingAllPlayers()
+            task.wait(0.3)
+        end
+        loopFlingAllThread = nil
+    end)
+end
+
+local function stopLoopFlingAll()
+    loopFlingAllEnabled = false
+    if loopFlingAllThread then 
+        task.cancel(loopFlingAllThread) 
+        loopFlingAllThread = nil
+    end
+    
+    ToggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+    ToggleCircle.Position = UDim2.new(0, 3, 0.5, -11)
+    ToggleCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Glow.BackgroundTransparency = 1
+    StatusDot.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+    StatusText.Text = "OFF"
+    StatusText.TextColor3 = Color3.fromRGB(180, 50, 50)
+end
+
+local function toggleFling()
+    if loopFlingAllEnabled then
+        stopLoopFlingAll()
+    else
+        startLoopFlingAll()
+    end
+end
+
+ToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+        toggleFling()
+    end
+end)
+
+local dragging = false
+local dragStart = nil
+local startPos = nil
+local activeTouch = nil
+
+DragHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        activeTouch = input
+    end
+end)
+
+DragHandle.InputChanged:Connect(function(input)
+    if dragging and activeTouch and input.UserInputType == activeTouch.UserInputType then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+DragHandle.InputEnded:Connect(function(input)
+    if input == activeTouch then
+        dragging = false
+        activeTouch = nil
+    end
+end)
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch and 
+       not ToggleBg:IsAncestorOf(input.TargetObject) and
+       not CloseBtn:IsAncestorOf(input.TargetObject) then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        activeTouch = input
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if dragging and activeTouch and input.UserInputType == activeTouch.UserInputType then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+MainFrame.InputEnded:Connect(function(input)
+    if input == activeTouch then
+        dragging = false
+        activeTouch = nil
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    FlingGUI:Destroy()
+    if loopFlingAllEnabled then
+        stopLoopFlingAll()
+    end
+end)
+
+updatePlayerCount()
