@@ -1,3 +1,5 @@
+setclipboard = function() end
+
 task.spawn(function()
     local load = require(game.ReplicatedStorage:WaitForChild("Fsys")).load
     set_thread_identity(2)
