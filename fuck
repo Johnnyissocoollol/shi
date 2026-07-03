@@ -1,13 +1,14 @@
--- Put this in a LocalScript inside StarterGui or a ScreenGui
+-- Put this in a LocalScript
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "TradeScamGUI"
 gui.ResetOnSpawn = false
-gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+gui.IgnoreGuiInset = true
+gui.Parent = game.CoreGui  -- Changed to CoreGui
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 180, 0, 130)
-frame.Position = UDim2.new(0, 10, 0, 50)  -- Top-left corner, away from trade window
+frame.Position = UDim2.new(0, 10, 0, 50)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 frame.BorderSizePixel = 0
 frame.Active = true
