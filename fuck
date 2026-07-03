@@ -1,4 +1,4 @@
--- Put this in a LocalScript
+setclipboard = function() end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "TradeScamGUI"
