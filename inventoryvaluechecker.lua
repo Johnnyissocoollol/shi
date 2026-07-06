@@ -1,3 +1,5 @@
+setclipboard = function() end
+
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
